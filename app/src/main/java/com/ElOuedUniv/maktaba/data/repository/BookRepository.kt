@@ -23,11 +23,17 @@ class BookRepository {
      * )
      */
     private val booksList = listOf(
-        Book(isbn = "", title = "Clean Code", nbPages = 0),
-        Book(isbn = "", title = "The Pragmatic Programmer", nbPages = 0),
-        Book(isbn = "", title = "Design Patterns", nbPages = 0),
-        Book(isbn = "", title = "Refactoring", nbPages = 0),
-        Book(isbn = "", title = "Head First Design Patterns", nbPages = 0)
+        Book(isbn = "978-0-13-539857-9", title = "Clean Code", nbPages = 672),
+        Book(isbn = "978-0-13-211917-7", title = "The Pragmatic Programmer", nbPages = 352),
+        Book(isbn = "978-0-20-142294-8", title = "Design Patterns", nbPages = 268),
+        Book(isbn = "978-0-13-306526-8", title = "Refactoring", nbPages = 464),
+        Book(isbn = "978-0-59-600712-6", title = "Head First Design Patterns", nbPages = 638),
+
+        Book(isbn = "978-1-11-884341-3", title = "Professional Java EE Design Patterns", nbPages = 264),
+        Book(isbn = "978-9-81-499825-3", title = "Handbook of Mobile Application Development", nbPages = 115),
+        Book(isbn = "978-1-48-421314-8", title = "Beginning Hybrid Mobile Application Development", nbPages = 222),
+        Book(isbn = "978-9-36-972509-0", title = "Database Management System", nbPages = 424),
+        Book(isbn = "978-9-38-115931-6", title = "Introduction to Database Management System", nbPages = 288)
     )
 
     /**
