@@ -1,8 +1,11 @@
-package com.ElOuedUniv.maktaba.presentation.screens
+package com.ElOuedUniv.maktaba.presentation.book
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -11,29 +14,53 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.ElOuedUniv.maktaba.data.model.Book
-import com.ElOuedUniv.maktaba.presentation.viewmodel.BookViewModel
 
-/**
- * Main screen displaying the list of books
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BookListScreen(
-    viewModel: BookViewModel
+fun BookListView(
+    onCategoriesClick: () -> Unit = {},
+    viewModel: BookViewModel = hiltViewModel()
 ) {
-    val books by viewModel.books.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+
+    if (uiState.isAddingBook) {
+        AddBookDialog(
+            onDismiss = { viewModel.onAction(BookUiAction.OnDismissAddBook) },
+            onConfirm = { title, isbn, pages ->
+                viewModel.onAction(BookUiAction.OnAddBookConfirm(title, isbn, pages))
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Maktaba - My Library") },
+                actions = {
+                    IconButton(onClick = onCategoriesClick) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "Categories"
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                viewModel.onAction(BookUiAction.OnAddBookClick)
+            }) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Book"
+                )
+            }
         }
     ) { paddingValues ->
         Box(
@@ -41,18 +68,16 @@ fun BookListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (isLoading) {
+            if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
-                if (books.isEmpty()) {
-                    EmptyBooksMessage(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                if (uiState.books.isEmpty()) {
+                    EmptyBooksMessage(modifier = Modifier.align(Alignment.Center))
                 } else {
                     BookList(
-                        books = books,
+                        books = uiState.books,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -61,9 +86,6 @@ fun BookListScreen(
     }
 }
 
-/**
- * Composable for displaying a list of books
- */
 @Composable
 fun BookList(
     books: List<Book>,
@@ -80,9 +102,6 @@ fun BookList(
     }
 }
 
-/**
- * Composable for displaying a single book item
- */
 @Composable
 fun BookItem(book: Book) {
     Card(
@@ -99,9 +118,9 @@ fun BookItem(book: Book) {
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -117,7 +136,7 @@ fun BookItem(book: Book) {
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
-                
+
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "Pages:",
@@ -134,9 +153,6 @@ fun BookItem(book: Book) {
     }
 }
 
-/**
- * Composable for displaying empty state message
- */
 @Composable
 fun EmptyBooksMessage(modifier: Modifier = Modifier) {
     Column(
