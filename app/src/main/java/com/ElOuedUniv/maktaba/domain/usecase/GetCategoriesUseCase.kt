@@ -7,7 +7,7 @@ import com.ElOuedUniv.maktaba.data.repository.CategoryRepository
 class GetCategoriesUseCase(
     private val categoryRepository: CategoryRepository
 ) {
-    operator fun invoke(): List<Category> {
-        TODO("Not yet implemented")
-    }
+   operator fun invoke(): List<Category> {
+    return categoryRepository.getAllCategories()
+}
 }

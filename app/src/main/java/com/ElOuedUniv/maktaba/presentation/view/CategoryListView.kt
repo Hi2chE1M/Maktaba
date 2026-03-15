@@ -97,9 +97,17 @@ fun CategoryItem(category: Category) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "Category Item",
+                text = category.name,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = category.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
