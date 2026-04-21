@@ -16,17 +16,17 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideBookRepository(
-        bookRepositoryImpl: BookRepositoryImpl
-    ): BookRepository {
-        return bookRepositoryImpl
-    }
-
-    @Provides
-    @Singleton
     fun provideCategoryRepository(
         categoryRepositoryImpl: CategoryRepositoryImpl
     ): CategoryRepository {
         return categoryRepositoryImpl
+    }
+
+    @Provides
+    @Singleton
+    fun provideBookRepository(
+        bookRepositoryImpl: BookRepositoryImpl
+    ): BookRepository {
+        return bookRepositoryImpl
     }
 }

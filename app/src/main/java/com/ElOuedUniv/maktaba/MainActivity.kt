@@ -4,12 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.ElOuedUniv.maktaba.presentation.book.BookListView
-import com.ElOuedUniv.maktaba.presentation.category.CategoryListView
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import com.ElOuedUniv.maktaba.presentation.navigation.NavGraph
 import com.ElOuedUniv.maktaba.presentation.theme.MaktabaTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -22,17 +19,7 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             MaktabaTheme {
-                var showCategories by remember { mutableStateOf(false) }
-                
-                if (showCategories) {
-                    CategoryListView(
-                        onBackClick = { showCategories = false }
-                    )
-                } else {
-                    BookListView(
-                        onCategoriesClick = { showCategories = true }
-                    )
-                }
+                NavGraph()
             }
         }
     }
