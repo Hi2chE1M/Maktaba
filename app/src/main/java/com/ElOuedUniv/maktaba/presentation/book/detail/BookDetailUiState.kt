@@ -5,5 +5,6 @@ import com.ElOuedUniv.maktaba.data.model.Book
 data class BookDetailUiState(
     val book: Book? = null,
     val isLoading: Boolean = false,
+    val isDeleted: Boolean = false,
     val errorMessage: String? = null
 )

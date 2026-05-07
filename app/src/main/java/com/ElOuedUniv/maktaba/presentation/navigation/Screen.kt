@@ -7,5 +7,7 @@ sealed class Screen(val route: String) {
         fun createRoute(isbn: String) = "book_detail/$isbn"
     }
     object CategoryList : Screen("category_list")
-    object AddBook : Screen("add_book")
+    object AddBook : Screen("add_book?isbn={isbn}") {
+        fun createRoute(isbn: String? = null) = if (isbn != null) "add_book?isbn=$isbn" else "add_book"
+    }
 }

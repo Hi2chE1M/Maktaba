@@ -7,5 +7,5 @@ interface CategoryRepository {
     
     fun getAllCategories(): Flow<List<Category>>
     
-    fun getCategoryById(id: String): Category?
+    suspend fun getCategoryById(id: String): Category?
 }

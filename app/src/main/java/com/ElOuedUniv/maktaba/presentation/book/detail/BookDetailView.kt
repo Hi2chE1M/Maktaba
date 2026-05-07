@@ -1,216 +1,253 @@
 package com.ElOuedUniv.maktaba.presentation.book.detail
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ElOuedUniv.maktaba.data.model.Book
 import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookDetailView(
     onBackClick: () -> Unit,
+    onEditClick: (String) -> Unit,
     viewModel: BookDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val scrollState = rememberScrollState()
+    val context = LocalContext.current
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // مراقبة الأخطاء وعرضها
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let {
+            Toast.makeText(context, "خطأ: $it", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    LaunchedEffect(uiState.isDeleted) {
+        if (uiState.isDeleted) {
+            onBackClick()
+        }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("حذف الكتاب") },
+            text = { Text("هل أنت متأكد من رغبتك في حذف هذا الكتاب؟") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.onAction(BookDetailUiAction.OnDeleteClick)
+                        showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("حذف")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("إلغاء")
+                }
+            }
+        )
+    }
 
     Scaffold(
+        containerColor = Color(0xFFF8F9FA),
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { 
-                    Text(
-                        "BOOK DETAILS", 
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp
-                        )
-                    ) 
-                },
+            TopAppBar(
+                title = { Text("تفاصيل الكتاب") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                actions = {
+                    IconButton(onClick = { onEditClick(uiState.book?.isbn ?: "") }) {
+                        Icon(Icons.Default.Edit, contentDescription = "تعديل")
+                    }
+                    IconButton(onClick = { showDeleteDialog = true }) {
+                        Icon(Icons.Default.Delete, contentDescription = "حذف", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
             )
         }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (uiState.book != null) {
-                val book = uiState.book!!
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState)
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Hero Section: Book Cover
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth(0.9f)
-                            .aspectRatio(0.7f),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            when {
+                uiState.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                uiState.book != null -> {
+                    val book = uiState.book!!
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            if (book.imageUrl != null) {
-                                AsyncImage(
-                                    model = book.imageUrl,
-                                    contentDescription = book.title,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.Book,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(120.dp).align(Alignment.Center),
-                                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                                )
-                            }
+                        item {
+                            BookHeader(book)
                         }
-                    }
+                        
+                        item {
+                            BookActions(
+                                book = book,
+                                onReadClick = {
+                                    book.pdfUrl?.let { url ->
+                                        try {
+                                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                setDataAndType(Uri.parse(url), "application/pdf")
+                                                flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                            }
+                                            context.startActivity(Intent.createChooser(intent, "افتح الكتاب باستخدام:"))
+                                        } catch (e: Exception) {
+                                            // إذا لم يتوفر تطبيق PDF، افتحه في المتصفح
+                                            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                            context.startActivity(browserIntent)
+                                        }
+                                    } ?: run {
+                                        Toast.makeText(context, "لا يوجد ملف PDF متاح", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                onFavoriteClick = {
+                                    viewModel.onAction(BookDetailUiAction.OnFavoriteClick)
+                                }
+                            )
+                        }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                        item {
+                            BookInfoSection(book)
+                        }
 
-                    // Title Section
-                    Text(
-                        text = book.title,
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.ExtraBold,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // Metadata Section
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.large,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(20.dp)) {
-                            // Reading Status
-                            MetadataItem(
-                                icon = Icons.Default.MenuBook,
-                                label = "Reading Status:",
-                                value = if (book.nbPages > 0) "75% Reading" else "Not started"
-                            ) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                LinearProgressIndicator(
-                                    progress = { if (book.nbPages > 0) 0.75f else 0f },
-                                    modifier = Modifier.fillMaxWidth().height(8.dp),
-                                    strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        if (!book.description.isNullOrBlank()) {
+                            item {
+                                Text(
+                                    text = "عن الكتاب",
+                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    text = book.description,
+                                    style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp),
+                                    color = Color.DarkGray
                                 )
                             }
-
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 16.dp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)
-                            )
-
-                            Row(modifier = Modifier.fillMaxWidth()) {
-                                Box(modifier = Modifier.weight(1f)) {
-                                    MetadataItem(
-                                        icon = Icons.Default.Straighten, // Ruler
-                                        label = "Pages:",
-                                        value = if (book.nbPages > 0) "${book.nbPages}" else "Not set"
-                                    )
-                                }
-                                Box(modifier = Modifier.weight(1f)) {
-                                    MetadataItem(
-                                        icon = Icons.AutoMirrored.Filled.List,
-                                        label = "ISBN:",
-                                        value = book.isbn
-                                    )
-                                }
-                            }
-
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 16.dp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)
-                            )
-
-                            MetadataItem(
-                                icon = Icons.Default.Fingerprint,
-                                label = "Format:",
-                                value = "Hardcover (Premium)"
-                            )
                         }
                     }
                 }
-            } else {
-                Text(
-                    text = uiState.errorMessage ?: "Book not found",
-                    modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.error
-                )
             }
         }
     }
 }
 
 @Composable
-fun MetadataItem(
-    icon: ImageVector,
-    label: String,
-    value: String,
-    content: @Composable ColumnScope.() -> Unit = {}
-) {
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+private fun BookHeader(book: Book) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.width(180.dp).aspectRatio(0.7f),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            if (!book.imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = book.imageUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
-                )
+            } else {
+                Box(modifier = Modifier.fillMaxSize().background(Color.White), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
+                }
             }
         }
-        content()
+        Spacer(Modifier.height(20.dp))
+        Text(
+            text = book.title,
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun BookActions(
+    book: Book, 
+    onReadClick: () -> Unit,
+    onFavoriteClick: () -> Unit
+) {
+    val favoriteColor by animateColorAsState(
+        if (book.isFavorite) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant,
+        label = "favoriteColor"
+    )
+
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Button(
+            onClick = onReadClick,
+            modifier = Modifier.weight(1f).height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            enabled = !book.pdfUrl.isNullOrEmpty()
+        ) {
+            Icon(Icons.Default.AutoStories, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("قراءة الكتاب")
+        }
+        
+        OutlinedButton(
+            onClick = onFavoriteClick,
+            modifier = Modifier.height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, if (book.isFavorite) Color.Red.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline)
+        ) {
+            Icon(
+                imageVector = if (book.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                contentDescription = null,
+                tint = favoriteColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun BookInfoSection(book: Book) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color.White).padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        InfoColumn(label = "الصفحات", value = if (book.nbPages > 0) book.nbPages.toString() else "--")
+        VerticalDivider(modifier = Modifier.height(40.dp).align(Alignment.CenterVertically))
+        InfoColumn(label = "النوع", value = "PDF")
+        VerticalDivider(modifier = Modifier.height(40.dp).align(Alignment.CenterVertically))
+        InfoColumn(label = "ISBN", value = book.isbn.takeLast(5))
+    }
+}
+
+@Composable
+private fun InfoColumn(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = label, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+        Text(text = value, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
     }
 }

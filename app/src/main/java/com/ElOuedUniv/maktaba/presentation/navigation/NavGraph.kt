@@ -2,9 +2,11 @@ package com.ElOuedUniv.maktaba.presentation.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.ElOuedUniv.maktaba.presentation.book.BookListView
 import com.ElOuedUniv.maktaba.presentation.book.add.AddBookView
 import com.ElOuedUniv.maktaba.presentation.book.detail.BookDetailView
@@ -13,11 +15,12 @@ import com.ElOuedUniv.maktaba.presentation.onboarding.OnboardingView
 
 @Composable
 fun NavGraph(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    startDestination: String = Screen.Onboarding.route
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Onboarding.route
+        startDestination = startDestination
     ) {
         composable(Screen.Onboarding.route) {
             OnboardingView(
@@ -32,7 +35,7 @@ fun NavGraph(
         composable(Screen.BookList.route) {
             BookListView(
                 onCategoriesClick = { navController.navigate(Screen.CategoryList.route) },
-                onAddBookClick = { navController.navigate(Screen.AddBook.route) },
+                onAddBookClick = { navController.navigate(Screen.AddBook.createRoute()) },
                 onBookClick = { isbn -> 
                     navController.navigate(Screen.BookDetail.createRoute(isbn))
                 }
@@ -40,14 +43,28 @@ fun NavGraph(
         }
         
         composable(Screen.BookDetail.route) {
-            BookDetailView(onBackClick = { navController.popBackStack() })
+            BookDetailView(
+                onBackClick = { navController.popBackStack() },
+                onEditClick = { isbn ->
+                    navController.navigate(Screen.AddBook.createRoute(isbn))
+                }
+            )
         }
         
         composable(Screen.CategoryList.route) {
             CategoryListView(onBackClick = { navController.popBackStack() })
         }
         
-        composable(Screen.AddBook.route) {
+        composable(
+            route = Screen.AddBook.route,
+            arguments = listOf(
+                navArgument("isbn") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) {
             AddBookView(onBackClick = { navController.popBackStack() })
         }
     }

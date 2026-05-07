@@ -11,11 +11,11 @@ import javax.inject.Inject
 class BookRepositoryImpl @Inject constructor() : BookRepository {
 
     private val _booksList = mutableListOf(
-        Book(isbn = "9780132350884", title = "Clean Code", nbPages = 464, imageUrl = "https://covers.openlibrary.org/b/isbn/9780132350884-L.jpg"),
-        Book(isbn = "9780201616224", title = "The Pragmatic Programmer", nbPages = 352, imageUrl = "https://covers.openlibrary.org/b/isbn/9780201616224-L.jpg"),
-        Book(isbn = "9780201633610", title = "Design Patterns", nbPages = 395, imageUrl = "https://covers.openlibrary.org/b/isbn/9780201633610-L.jpg"),
-        Book(isbn = "9780201485677", title = "Refactoring", nbPages = 461, imageUrl = "https://covers.openlibrary.org/b/isbn/9780201485677-L.jpg"),
-        Book(isbn = "9780596007126", title = "Head First Design Patterns", nbPages = 694, imageUrl = "https://covers.openlibrary.org/b/isbn/9780596007126-L.jpg")
+        Book(isbn = "11111", title = "Clean Code", nbPages = 10),
+        Book(isbn = "22222", title = "The Pragmatic Programmer", nbPages = 0),
+        Book(isbn = "33333", title = "Design Patterns", nbPages = 0),
+        Book(isbn = "44444", title = "Refactoring", nbPages = 0),
+        Book(isbn = "55555", title = "Head First Design Patterns", nbPages = 0)
     )
 
     private val booksFlow = MutableSharedFlow<List<Book>>(replay = 1).apply {
@@ -23,16 +23,46 @@ class BookRepositoryImpl @Inject constructor() : BookRepository {
     }
     
     override fun getAllBooks(): Flow<List<Book>> = flow {
-        delay(2000) // Simulate delay
+        delay(500) // Simulate delay
         emitAll(booksFlow)
     }
 
-    override fun getBookByIsbn(isbn: String): Book? {
+    override suspend fun getBookByIsbn(isbn: String): Book? {
         return _booksList.find { it.isbn == isbn }
     }
 
-    override fun addBook(book: Book) {
+    override suspend fun addBook(book: Book) {
         _booksList.add(book)
         booksFlow.tryEmit(_booksList.toList())
+    }
+
+    override suspend fun updateBook(book: Book) {
+        val index = _booksList.indexOfFirst { it.isbn == book.isbn }
+        if (index != -1) {
+            _booksList[index] = book
+            booksFlow.tryEmit(_booksList.toList())
+        }
+    }
+
+    override suspend fun deleteBook(isbn: String) {
+        _booksList.removeAll { it.isbn == isbn }
+        booksFlow.tryEmit(_booksList.toList())
+    }
+
+    override suspend fun uploadFile(bucketName: String, fileName: String, byteArray: ByteArray): String {
+        return "https://example.com/$bucketName/$fileName"
+    }
+
+    override suspend fun deleteFile(bucketName: String, fileName: String) {
+        // Mock delete
+    }
+
+    override suspend fun toggleFavorite(isbn: String) {
+        val index = _booksList.indexOfFirst { it.isbn == isbn }
+        if (index != -1) {
+            val book = _booksList[index]
+            _booksList[index] = book.copy(isFavorite = !book.isFavorite)
+            booksFlow.tryEmit(_booksList.toList())
+        }
     }
 }

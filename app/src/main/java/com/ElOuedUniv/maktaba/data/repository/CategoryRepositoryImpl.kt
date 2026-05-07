@@ -14,20 +14,17 @@ class CategoryRepositoryImpl @Inject constructor() : CategoryRepository {
         Category(
             id = "1",
             name = "Programming",
-            description = "Books about software development and coding",
-            iconRes = android.R.drawable.ic_menu_preferences
+            description = "Books about software development and coding"
         ),
         Category(
             id = "2",
             name = "Algorithms",
-            description = "Books about algorithms and data structures",
-            iconRes = android.R.drawable.ic_menu_compass
+            description = "Books about algorithms and data structures"
         ),
         Category(
             id = "3",
             name = "Databases",
-            description = "Books about database design and management",
-            iconRes = android.R.drawable.ic_menu_save
+            description = "Books about database design and management"
         )
     )
 
@@ -40,7 +37,7 @@ class CategoryRepositoryImpl @Inject constructor() : CategoryRepository {
         emitAll(categoriesFlow)
     }
 
-    override fun getCategoryById(id: String): Category? {
+    override suspend fun getCategoryById(id: String): Category? {
         return _categoriesList.find { it.id == id }
     }
 }
